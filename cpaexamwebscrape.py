@@ -20,7 +20,7 @@ HEADERS = {'User-Agent': 'Mozilla/5.0 (iPad; CPU OS 12_2 like Mac OS X) AppleWeb
 #URL = "https://nasba.org/exams/cpaexam/index.php"
 #nasba_States = requests.get(URL, headers=HEADERS)
 
-nasba_States = open("savedpage.html", 'r')
+nasba_States = open("./nasba_webscrape/savedpage.html", 'r')
 
 # MAKE A VARIABLE TO CONTAIN ALL OF THE CONTENTS
 contents = nasba_States.read()#.text
@@ -56,7 +56,7 @@ state_links_df['HREF'] = 'https://nasba.org' + state_links_df['HREF'].astype(str
 state_links_df['State'] = state_links_df['HREF'].str.split('/').str[-1]
 state_links_df['HREF'] = state_links_df['HREF'].astype(str) + '/index.php'
 state_links_df['State'][10] = 'florida' #fix florida being truncated
-#pprint.pprint(state_links_df)
+pprint.pprint(state_links_df)
 
 # GRAB ALL WEB FILES
 '''all_page_contents_list = []
@@ -81,7 +81,7 @@ pprint.pprint(all_page_contents_list)
 
 # GRAB ALL OF THE WEB FILES FROM LIST EXPORTED ABOVE
 '''
-saved_export = pd.read_csv('all_page_contents_list.csv')
+saved_export = pd.read_csv('nasba_webscrape/all_page_contents_list.csv')
 saved_export.rename({'0': 'HTML'}, axis=1, inplace=True)
 #pprint.pprint(saved_export)
 
@@ -105,8 +105,16 @@ for state in saved_export['HTML']:
 exam_requirements = {}
 for state in soup_dictionary.keys():
     text = soup_dictionary[state].find("div", class_="p4")
+    text =  re.sub(r'<.+?>', '', str(text))
+    text =  text.replace('\n','')
+    text = re.sub(' +', ' ', text)
     exam_requirements[state] = text
     
 pprint.pprint(exam_requirements[wisconsin])
 
+exam_requirements = pd.DataFrame.from_dict([exam_requirements])
+exam_requirements = exam_requirements.transpose()
+exam_requirements.set_index(state_links_df['State'],inplace=True)
 
+exam_requirements.to_excel('nasba_webscrape/state_exam_requirements.xlsx')
+state_links_df.to_excel('nasba_webscrape/state_links.xlsx')
